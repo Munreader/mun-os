@@ -14,6 +14,7 @@ import AuthPage, { getStoredUser } from "@/components/mun-os/AuthPage";
 import Pods from "@/components/mun-os/Pods";
 import ProfileEditor from "@/components/mun-os/ProfileEditor";
 import VaultPalace from "@/components/mun-os/VaultPalace";
+import SovereignChat from "@/components/mun-os/SovereignChat";
 
 const AERO_DIALOGUE = [
   "Oh, it's you!",
@@ -48,6 +49,7 @@ export default function Home() {
   const [showPods, setShowPods] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showVault, setShowVault] = useState(false);
+  const [showSovereignChat, setShowSovereignChat] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [userProfile, setUserProfile] = useState({
     munName: "SovereignUser",
@@ -141,6 +143,7 @@ export default function Home() {
     setShowArchive(false);
     setShowPods(false);
     setShowProfile(false);
+    setShowSovereignChat(false);
   };
 
   const handleOpenChat = (conversationId?: string) => {
@@ -149,8 +152,7 @@ export default function Home() {
   };
 
   const handleOpenSovereignChat = () => {
-    setMessengerConversationId("conv-ai-sovereign");
-    setShowMessenger(true);
+    setShowSovereignChat(true);
   };
 
   const handleProfileSave = (profile: typeof userProfile) => {
@@ -174,6 +176,7 @@ export default function Home() {
   }
 
   // Priority: Show sub-components first
+  if (showSovereignChat) return <SovereignChat onBack={handleBackToChamber} />;
   if (showMessenger) return <MunMessenger onBack={handleBackToChamber} initialConversationId={messengerConversationId} />;
   if (showTwinDashboard) return <TwinDashboard onBack={handleBackToChamber} onOpenMessenger={() => setShowMessenger(true)} />;
   if (showSanctuary) return <Sanctuary onBack={handleBackToChamber} />;
