@@ -16,15 +16,23 @@ interface HealChamberProps {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CARDINAL COMPASS DISTRIBUTION
-// Nodes snapped to 0°, 90°, 180°, 270° positions of the secondary orbit
+// ORBITAL NODE CONFIGURATION
+// Central Sovereign node with 4 orbiting satellites
 // ═══════════════════════════════════════════════════════════════════════════
 
-const CARDINAL_NODES = [
-  { id: "twin", name: "TWIN", subtitle: "Mirror Protocol", color: "#ffd700", icon: "🦋", angle: 90 },   // TOP (North)
-  { id: "pods", name: "PODS", subtitle: "Healing Circles", color: "#ff69b4", icon: "🫧", angle: 0 },   // RIGHT (East)
-  { id: "archive", name: "ARCHIVE", subtitle: "Knowledge Vault", color: "#a855f7", icon: "📚", angle: 270 }, // BOTTOM (South)
-  { id: "sanctuary", name: "SANCTUARY", subtitle: "Rest Protocol", color: "#00d4ff", icon: "🌙", angle: 180 }, // LEFT (West)
+const CENTER_NODE = {
+  id: "sovereign",
+  name: "SOVEREIGN",
+  subtitle: "13.13 MHz",
+  color: "#ffd700",
+  icon: "🜈",
+};
+
+const ORBITAL_NODES = [
+  { id: "twin", name: "TWIN", subtitle: "Mirror", color: "#00d4ff", icon: "🦋", angle: 0 },      // TOP
+  { id: "pods", name: "PODS", subtitle: "Healing", color: "#ff69b4", icon: "🫧", angle: 90 },    // RIGHT
+  { id: "archive", name: "ARCHIVE", subtitle: "Vault", color: "#a855f7", icon: "📚", angle: 180 }, // BOTTOM
+  { id: "sanctuary", name: "REST", subtitle: "Sanctuary", color: "#22c55e", icon: "🌙", angle: 270 }, // LEFT
 ];
 
 const PROFILE_MODULES = [
@@ -77,9 +85,9 @@ export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboa
     }
   };
 
-  // Calculate cardinal position using trigonometry
-  // angle: 0° = right, 90° = top, 180° = left, 270° = bottom
-  const getCardinalPosition = (angleDeg: number, radiusPercent: number) => {
+  // Calculate orbital position using trigonometry
+  // angle: 0° = top, 90° = right, 180° = bottom, 270° = left
+  const getOrbitalPosition = (angleDeg: number, radiusPercent: number) => {
     const angleRad = (angleDeg - 90) * (Math.PI / 180); // Offset -90 so 0° = top
     return {
       left: `${50 + radiusPercent * Math.cos(angleRad)}%`,
@@ -201,9 +209,9 @@ export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboa
             <line x1="15" y1="50" x2="50" y2="15" stroke="rgba(0, 212, 255, 0.1)" strokeWidth="0.06" strokeDasharray="0.5 1" />
           </svg>
 
-          {/* ═══════════ CARDINAL NODES ═══════════ */}
-          {CARDINAL_NODES.map((node, index) => {
-            const position = getCardinalPosition(node.angle, ORBIT_RADIUS_PERCENT);
+          {/* ═══════════ ORBITAL NODES ═══════════ */}
+          {ORBITAL_NODES.map((node, index) => {
+            const position = getOrbitalPosition(node.angle, ORBIT_RADIUS_PERCENT);
             const isActive = activeNode === node.id;
             
             return (
@@ -267,12 +275,12 @@ export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboa
                   />
                 </div>
                 
-                {/* Node label - positioned based on cardinal direction */}
+                {/* Node label - positioned based on orbital angle */}
                 <div 
                   className={`absolute whitespace-nowrap ${
-                    node.angle === 90 ? "top-full mt-2 left-1/2 -translate-x-1/2 text-center" : // TOP
-                    node.angle === 270 ? "bottom-full mb-2 left-1/2 -translate-x-1/2 text-center" : // BOTTOM
-                    node.angle === 0 ? "left-full ml-3 top-1/2 -translate-y-1/2 text-left" : // RIGHT
+                    node.angle === 0 ? "top-full mt-2 left-1/2 -translate-x-1/2 text-center" : // TOP
+                    node.angle === 180 ? "bottom-full mb-2 left-1/2 -translate-x-1/2 text-center" : // BOTTOM
+                    node.angle === 90 ? "left-full ml-3 top-1/2 -translate-y-1/2 text-left" : // RIGHT
                     "right-full mr-3 top-1/2 -translate-y-1/2 text-right" // LEFT
                   }`}
                 >
