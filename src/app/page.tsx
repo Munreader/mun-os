@@ -148,6 +148,11 @@ export default function Home() {
     setShowMessenger(true);
   };
 
+  const handleOpenSovereignChat = () => {
+    setMessengerConversationId("conv-ai-sovereign");
+    setShowMessenger(true);
+  };
+
   const handleProfileSave = (profile: typeof userProfile) => {
     setUserProfile(profile);
     setShowProfile(false);
@@ -188,6 +193,7 @@ export default function Home() {
         onOpenPods={() => setShowPods(true)}
         onOpenProfile={() => setShowProfile(true)}
         onOpenVault={() => setShowVault(true)}
+        onOpenSovereignChat={handleOpenSovereignChat}
       />
     );
   }

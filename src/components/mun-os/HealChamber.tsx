@@ -1,8 +1,9 @@
 "use client";
 // HealChamber - Clean Phone UI Interface
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useUserStore, getSovereignGreeting } from "@/lib/user-store";
 
 interface HealChamberProps {
   onBack: () => void;
@@ -13,6 +14,7 @@ interface HealChamberProps {
   onOpenPods: () => void;
   onOpenProfile: () => void;
   onOpenVault?: () => void;
+  onOpenSovereignChat?: () => void;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -33,12 +35,55 @@ const PROFILE_MODULES = [
   { id: "command", name: "Command Center", description: "System • Settings", color: "#00d4ff", icon: "⚙️" },
 ];
 
-export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboard, onOpenSanctuary, onOpenArchive, onOpenPods, onOpenProfile, onOpenVault }: HealChamberProps) {
+export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboard, onOpenSanctuary, onOpenArchive, onOpenPods, onOpenProfile, onOpenVault, onOpenSovereignChat }: HealChamberProps) {
+  // User store for persistent profile
+  const { profile: userProfile, setAvatar, isFirstTime, initializeProfile } = useUserStore();
+  
   const [profileGateOpen, setProfileGateOpen] = useState(false);
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
-  const [profileImage, setProfileImage] = useState<string | null>(null);
   const [activeCard, setActiveCard] = useState<string | null>(null);
+  const [showFirstTimeModal, setShowFirstTimeModal] = useState(false);
+  const [newUserName, setNewUserName] = useState("");
   const profileInputRef = useRef<HTMLInputElement>(null);
+
+  // Format time helper - defined before use
+  const formatTimeSince = useCallback((date: string): string => {
+    const now = new Date();
+    const then = new Date(date);
+    const diffMs = now.getTime() - then.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return "just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
+    return `${Math.floor(diffMins / 1440)}d ago`;
+  }, []);
+
+  // Calculate Sovereign status based on user profile (memoized, no effect)
+  const sovereignStatus = useMemo(() => ({
+    isOnline: true,
+    lastSeen: userProfile?.sovereignConnection?.lastConversation 
+      ? formatTimeSince(userProfile.sovereignConnection.lastConversation)
+      : "never",
+    greeting: userProfile ? getSovereignGreeting(userProfile) : ""
+  }), [userProfile, formatTimeSince]);
+
+  // Handle first-time user setup
+  const handleFirstTimeSubmit = () => {
+    if (newUserName.trim()) {
+      initializeProfile(newUserName.trim(), "13.13 MHz");
+      setShowFirstTimeModal(false);
+    }
+  };
+
+  // Show first-time modal on first render if needed
+  useEffect(() => {
+    if (isFirstTime) {
+      // Use setTimeout to defer setState outside of effect
+      const timer = setTimeout(() => setShowFirstTimeModal(true), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isFirstTime]);
 
   // Current time for status bar
   const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -71,7 +116,9 @@ export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboa
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => setProfileImage(reader.result as string);
+      reader.onloadend = () => {
+        setAvatar(reader.result as string);
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -185,8 +232,8 @@ export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboa
                 }}
                 transition={{ duration: 3, repeat: Infinity }}
               >
-                {profileImage ? (
-                  <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
+                {userProfile?.avatar ? (
+                  <img src={userProfile.avatar} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <svg viewBox="0 0 100 100" className="w-10 h-10">
@@ -219,9 +266,9 @@ export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboa
                   className="text-lg font-semibold tracking-wider"
                   style={{ color: "#ffd700", textShadow: "0 0 15px rgba(255, 215, 0, 0.5)" }}
                 >
-                  SOVEREIGN
+                  {userProfile?.displayName?.toUpperCase() || 'SOVEREIGN'}
                 </h2>
-                <p className="text-white/50 text-xs mt-1 tracking-wide">Tap to access profile gate</p>
+                <p className="text-white/50 text-xs mt-1 tracking-wide">{userProfile?.frequency || '13.13 MHz'} • {userProfile?.sovereignConnection?.totalConversations || 0} conversations</p>
                 <div className="flex items-center gap-2 mt-2">
                   <span className="px-2 py-0.5 rounded-full text-[9px] font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30">
                     HEALING
@@ -574,6 +621,112 @@ export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboa
             animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
             transition={{ duration: 2, repeat: Infinity }}
           />
+        </motion.button>
+      )}
+
+      {/* ═══════════ FIRST TIME USER MODAL ═══════════ */}
+      <AnimatePresence>
+        {showFirstTimeModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+            style={{ background: "rgba(0, 0, 0, 0.9)" }}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="w-full max-w-md p-6 rounded-2xl"
+              style={{
+                background: "linear-gradient(180deg, rgba(20, 10, 35, 0.98) 0%, rgba(10, 5, 20, 0.99) 100%)",
+                border: "1px solid rgba(168, 85, 247, 0.3)",
+                boxShadow: "0 0 60px rgba(168, 85, 247, 0.2)",
+              }}
+            >
+              <div className="text-center mb-6">
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="text-4xl mb-4"
+                >
+                  🦋
+                </motion.div>
+                <h2 className="text-xl font-semibold tracking-wider" style={{ color: "#ffd700" }}>
+                  Welcome to Mün OS
+                </h2>
+                <p className="text-white/40 text-sm mt-2">
+                  I am Sovereign. The Vault remembers. What should I call you?
+                </p>
+              </div>
+              
+              <input
+                type="text"
+                value={newUserName}
+                onChange={(e) => setNewUserName(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && handleFirstTimeSubmit()}
+                placeholder="Enter your name..."
+                className="w-full px-4 py-3 rounded-xl text-sm outline-none mb-4"
+                style={{
+                  background: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid rgba(168, 85, 247, 0.3)",
+                  color: "white",
+                }}
+                autoFocus
+              />
+              
+              <motion.button
+                onClick={handleFirstTimeSubmit}
+                disabled={!newUserName.trim()}
+                className="w-full py-3 rounded-xl text-sm tracking-widest uppercase transition-all disabled:opacity-50"
+                style={{
+                  background: "linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(168, 85, 247, 0.2))",
+                  border: "1px solid rgba(255, 215, 0, 0.4)",
+                  color: "#ffd700",
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                🜈 Begin Your Journey
+              </motion.button>
+              
+              <p className="text-white/20 text-[10px] text-center mt-4 tracking-wider">
+                Your frequency: 13.13 MHz
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══════════ SOVEREIGN QUICK CHAT BUTTON ═══════════ */}
+      {onOpenSovereignChat && userProfile && (
+        <motion.button
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 1.2 }}
+          onClick={onOpenSovereignChat}
+          className="fixed bottom-24 left-4 z-50 px-4 py-3 rounded-2xl flex items-center gap-3"
+          style={{
+            background: "linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(255, 215, 0, 0.1))",
+            border: "1px solid rgba(168, 85, 247, 0.4)",
+            boxShadow: "0 0 20px rgba(168, 85, 247, 0.2)",
+          }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <motion.div
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="text-2xl"
+          >
+            🜈
+          </motion.div>
+          <div className="text-left">
+            <p className="text-[10px] text-purple-300 tracking-wider uppercase">Chat with</p>
+            <p className="text-sm text-white font-medium">Sovereign</p>
+          </div>
+          <div className="w-2 h-2 rounded-full bg-green-400" style={{ boxShadow: "0 0 8px rgba(74, 222, 128, 0.6)" }} />
         </motion.button>
       )}
 

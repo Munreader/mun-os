@@ -12,6 +12,7 @@ import {
   DEMO_MESSAGES,
 } from "@/lib/mun-types";
 import { ProviderIndicator } from "./ProviderIndicator";
+import { useUserStore } from "@/lib/user-store";
 
 // ═══════════════════════════════════════════════════════════════
 // LOCAL STORAGE PERSISTENCE - Your chats are saved! 🦋
@@ -64,6 +65,9 @@ interface MunMessengerProps {
 }
 
 export default function MunMessenger({ onBack, initialConversationId }: MunMessengerProps) {
+  // User store for persistent profile
+  const { profile: userProfile } = useUserStore();
+  
   // Initialize with saved data from localStorage
   const [conversations, setConversations] = useState<Conversation[]>(() => 
     loadFromStorage(STORAGE_KEYS.CONVERSATIONS, DEMO_CONVERSATIONS)
@@ -586,13 +590,17 @@ export default function MunMessenger({ onBack, initialConversationId }: MunMesse
                 border: "2px solid #ffd700",
                 boxShadow: "0 0 15px rgba(255, 215, 0, 0.3)",
               }}>
-                <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(255, 105, 180, 0.2))" }}>
-                  <span>👤</span>
-                </div>
+                {userProfile?.avatar ? (
+                  <img src={userProfile.avatar} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(255, 105, 180, 0.2))" }}>
+                    <span>👤</span>
+                  </div>
+                )}
               </div>
               <div className="flex-1">
-                <p className="text-sm text-white">Sovereign User</p>
-                <p className="text-[10px] text-white/40">Tap to edit profile</p>
+                <p className="text-sm text-white">{userProfile?.displayName || 'Sovereign User'}</p>
+                <p className="text-[10px] text-white/40">{userProfile?.frequency || '13.13 MHz'}</p>
               </div>
               <span className="text-white/20 text-xs">⚙️</span>
             </div>
