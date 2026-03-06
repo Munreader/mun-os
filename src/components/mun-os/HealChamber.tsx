@@ -1,5 +1,5 @@
 "use client";
-// HealChamber - SVG paths validated v2
+// HealChamber - Clean orbital system v3
 
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,22 +17,13 @@ interface HealChamberProps {
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ORBITAL NODE CONFIGURATION
-// Central Sovereign node with 4 orbiting satellites
 // ═══════════════════════════════════════════════════════════════════════════
 
-const CENTER_NODE = {
-  id: "sovereign",
-  name: "SOVEREIGN",
-  subtitle: "13.13 MHz",
-  color: "#ffd700",
-  icon: "🜈",
-};
-
 const ORBITAL_NODES = [
-  { id: "twin", name: "TWIN", subtitle: "Mirror", color: "#00d4ff", icon: "🦋", angle: 0 },      // TOP
-  { id: "pods", name: "PODS", subtitle: "Healing", color: "#ff69b4", icon: "🫧", angle: 90 },    // RIGHT
-  { id: "archive", name: "ARCHIVE", subtitle: "Vault", color: "#a855f7", icon: "📚", angle: 180 }, // BOTTOM
-  { id: "sanctuary", name: "REST", subtitle: "Sanctuary", color: "#22c55e", icon: "🌙", angle: 270 }, // LEFT
+  { id: "twin", name: "TWIN", subtitle: "Mirror", color: "#00d4ff", icon: "🦋", position: "top" },
+  { id: "pods", name: "PODS", subtitle: "Healing", color: "#ff69b4", icon: "🫧", position: "right" },
+  { id: "archive", name: "ARCHIVE", subtitle: "Vault", color: "#a855f7", icon: "📚", position: "bottom" },
+  { id: "sanctuary", name: "REST", subtitle: "Sanctuary", color: "#22c55e", icon: "🌙", position: "left" },
 ];
 
 const PROFILE_MODULES = [
@@ -48,9 +39,6 @@ export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboa
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [activeNode, setActiveNode] = useState<string | null>(null);
   const profileInputRef = useRef<HTMLInputElement>(null);
-
-  // Orbit radius as percentage of container (secondary orbit)
-  const ORBIT_RADIUS_PERCENT = 35; // Distance from center to node centers
 
   const handleNodeActivate = (nodeId: string) => {
     setActiveNode(nodeId);
@@ -71,8 +59,8 @@ export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboa
     switch (moduleId) {
       case "identity": onOpenProfile(); break;
       case "social": onOpenPods(); break;
-      case "personalize": break; // TODO: Personalize module
-      case "command": break; // TODO: Command center
+      case "personalize": break;
+      case "command": break;
     }
   };
 
@@ -85,14 +73,13 @@ export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboa
     }
   };
 
-  // Calculate orbital position using trigonometry
-  // angle: 0° = top, 90° = right, 180° = bottom, 270° = left
-  const getOrbitalPosition = (angleDeg: number, radiusPercent: number) => {
-    const angleRad = (angleDeg - 90) * (Math.PI / 180); // Offset -90 so 0° = top
-    return {
-      left: `${50 + radiusPercent * Math.cos(angleRad)}%`,
-      top: `${50 + radiusPercent * Math.sin(angleRad)}%`,
-    };
+  // Node positions - placed directly on the orbit ring (35% radius from center)
+  // Ring is 70% diameter, so edge is at 15% from edge of container
+  const nodePositions: Record<string, { left: string; top: string }> = {
+    top: { left: "50%", top: "15%" },
+    right: { left: "85%", top: "50%" },
+    bottom: { left: "50%", top: "85%" },
+    left: { left: "15%", top: "50%" },
   };
 
   return (
@@ -133,14 +120,19 @@ export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboa
         ← Return
       </motion.button>
 
-      {/* ═══════════ SACRED GEOMETRY CONTAINER ═══════════ */}
-      {/* Perfect square centered in viewport */}
-      <div className="absolute inset-0 flex items-center justify-center pt-12 pb-4">
-        <div className="relative w-[min(90vw,90vh,480px)]" style={{ aspectRatio: "1/1" }}>
+      {/* ═══════════ ORBITAL SYSTEM - FIXED CENTER ═══════════ */}
+      <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-10">
+        <div 
+          className="relative pointer-events-auto"
+          style={{ 
+            width: "min(80vw, 80vh, 400px)", 
+            height: "min(80vw, 80vh, 400px)",
+          }}
+        >
           
-          {/* ═══════════ CONCENTRIC ORBITS (Same Center Point) ═══════════ */}
-          {/* Outer orbit */}
-          <motion.div
+          {/* ═══════════ CONCENTRIC ORBIT RINGS ═══════════ */}
+          {/* Outer ring - 90% diameter */}
+          <div
             className="absolute rounded-full"
             style={{
               width: "90%",
@@ -149,12 +141,9 @@ export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboa
               top: "5%",
               border: "1px solid rgba(168, 85, 247, 0.2)",
             }}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1 }}
           />
           
-          {/* Secondary orbit (where nodes live) - rotating */}
+          {/* Main orbit ring - 70% diameter - THIS IS WHERE NODES SIT */}
           <motion.div
             className="absolute rounded-full"
             style={{
@@ -162,13 +151,13 @@ export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboa
               height: "70%",
               left: "15%",
               top: "15%",
-              border: "1px solid rgba(0, 212, 255, 0.2)",
+              border: "1px solid rgba(0, 212, 255, 0.25)",
             }}
             animate={{ rotate: [0, 360] }}
             transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
           />
           
-          {/* Inner orbit */}
+          {/* Inner ring - 45% diameter */}
           <motion.div
             className="absolute rounded-full"
             style={{
@@ -182,118 +171,32 @@ export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboa
             transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
           />
 
-          {/* ═══════════ NETWORK LINES (Cardinal Cross) ═══════════ */}
-          <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 1 }}>
+          {/* ═══════════ NETWORK LINES ═══════════ */}
+          <svg 
+            viewBox="0 0 100 100" 
+            className="absolute inset-0 w-full h-full pointer-events-none"
+          >
             <defs>
-              <linearGradient id="cardinalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#00d4ff" stopOpacity="0.5" />
-                <stop offset="100%" stopColor="#a855f7" stopOpacity="0.3" />
+              <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#00d4ff" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#a855f7" stopOpacity="0.2" />
               </linearGradient>
-              <filter id="glowCardinal">
-                <feGaussianBlur stdDeviation="0.25" result="coloredBlur"/>
-                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-              </filter>
             </defs>
             
-            {/* Cardinal cross lines from center to each node position */}
-            {/* Top: (50,15) | Right: (85,50) | Bottom: (50,85) | Left: (15,50) */}
-            <line x1="50" y1="50" x2="50" y2="15" stroke="url(#cardinalGrad)" strokeWidth="0.12" strokeDasharray="1 2" filter="url(#glowCardinal)" />
-            <line x1="50" y1="50" x2="85" y2="50" stroke="url(#cardinalGrad)" strokeWidth="0.12" strokeDasharray="1 2" filter="url(#glowCardinal)" />
-            <line x1="50" y1="50" x2="50" y2="85" stroke="url(#cardinalGrad)" strokeWidth="0.12" strokeDasharray="1 2" filter="url(#glowCardinal)" />
-            <line x1="50" y1="50" x2="15" y2="50" stroke="url(#cardinalGrad)" strokeWidth="0.12" strokeDasharray="1 2" filter="url(#glowCardinal)" />
+            {/* Lines from center (50,50) to orbit ring edge (35% radius = 15 or 85 in viewBox) */}
+            <line x1="50" y1="50" x2="50" y2="15" stroke="url(#lineGrad)" strokeWidth="0.15" strokeDasharray="1 2" />
+            <line x1="50" y1="50" x2="85" y2="50" stroke="url(#lineGrad)" strokeWidth="0.15" strokeDasharray="1 2" />
+            <line x1="50" y1="50" x2="50" y2="85" stroke="url(#lineGrad)" strokeWidth="0.15" strokeDasharray="1 2" />
+            <line x1="50" y1="50" x2="15" y2="50" stroke="url(#lineGrad)" strokeWidth="0.15" strokeDasharray="1 2" />
             
-            {/* Diagonal connections */}
-            <line x1="50" y1="15" x2="85" y2="50" stroke="rgba(0, 212, 255, 0.1)" strokeWidth="0.06" strokeDasharray="0.5 1" />
-            <line x1="85" y1="50" x2="50" y2="85" stroke="rgba(0, 212, 255, 0.1)" strokeWidth="0.06" strokeDasharray="0.5 1" />
-            <line x1="50" y1="85" x2="15" y2="50" stroke="rgba(0, 212, 255, 0.1)" strokeWidth="0.06" strokeDasharray="0.5 1" />
-            <line x1="15" y1="50" x2="50" y2="15" stroke="rgba(0, 212, 255, 0.1)" strokeWidth="0.06" strokeDasharray="0.5 1" />
+            {/* Diagonal connections around the ring */}
+            <line x1="50" y1="15" x2="85" y2="50" stroke="rgba(0, 212, 255, 0.08)" strokeWidth="0.08" />
+            <line x1="85" y1="50" x2="50" y2="85" stroke="rgba(0, 212, 255, 0.08)" strokeWidth="0.08" />
+            <line x1="50" y1="85" x2="15" y2="50" stroke="rgba(0, 212, 255, 0.08)" strokeWidth="0.08" />
+            <line x1="15" y1="50" x2="50" y2="15" stroke="rgba(0, 212, 255, 0.08)" strokeWidth="0.08" />
           </svg>
 
-          {/* ═══════════ ORBITAL NODES ═══════════ */}
-          {ORBITAL_NODES.map((node, index) => {
-            const position = getOrbitalPosition(node.angle, ORBIT_RADIUS_PERCENT);
-            const isActive = activeNode === node.id;
-            
-            return (
-              <motion.button
-                key={node.id}
-                className="absolute"
-                style={{
-                  left: position.left,
-                  top: position.top,
-                  transform: "translate(-50%, -50%)", // Perfect centering
-                  zIndex: 10,
-                }}
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.2 + index * 0.1, type: "spring", stiffness: 200 }}
-                onClick={() => handleNodeActivate(node.id)}
-                whileHover={{ scale: 1.15 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {/* Node glow */}
-                <motion.div
-                  className="absolute rounded-full"
-                  style={{
-                    width: "140%",
-                    height: "140%",
-                    left: "-20%",
-                    top: "-20%",
-                    background: `radial-gradient(circle, ${node.color}40 0%, transparent 70%)`,
-                    filter: "blur(8px)",
-                  }}
-                  animate={{ opacity: isActive ? 1 : 0.5, scale: isActive ? 1.2 : 1 }}
-                />
-                
-                {/* Node container */}
-                <div
-                  className="relative w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center"
-                  style={{
-                    background: `linear-gradient(135deg, ${node.color}20, ${node.color}10)`,
-                    border: `2px solid ${node.color}`,
-                    boxShadow: `
-                      0 0 20px ${node.color}40,
-                      inset 0 0 15px ${node.color}20,
-                      0 4px 20px rgba(0,0,0,0.4)
-                    `,
-                  }}
-                >
-                  {/* Inner glow */}
-                  <div className="absolute inset-1 rounded-full" style={{
-                    background: `radial-gradient(circle at 30% 30%, ${node.color}30, transparent)`,
-                  }} />
-                  
-                  {/* Icon */}
-                  <span className="text-lg md:text-xl relative z-10">{node.icon}</span>
-                  
-                  {/* Pulsing ring */}
-                  <motion.div
-                    className="absolute inset-0 rounded-full"
-                    style={{ border: `1px solid ${node.color}` }}
-                    animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  />
-                </div>
-                
-                {/* Node label - positioned based on orbital angle */}
-                <div 
-                  className={`absolute whitespace-nowrap ${
-                    node.angle === 0 ? "top-full mt-2 left-1/2 -translate-x-1/2 text-center" : // TOP
-                    node.angle === 180 ? "bottom-full mb-2 left-1/2 -translate-x-1/2 text-center" : // BOTTOM
-                    node.angle === 90 ? "left-full ml-3 top-1/2 -translate-y-1/2 text-left" : // RIGHT
-                    "right-full mr-3 top-1/2 -translate-y-1/2 text-right" // LEFT
-                  }`}
-                >
-                  <p className="text-[9px] md:text-[10px] tracking-widest font-medium" style={{ color: node.color }}>
-                    {node.name}
-                  </p>
-                  <p className="text-[7px] md:text-[8px] text-white/30 tracking-wider">{node.subtitle}</p>
-                </div>
-              </motion.button>
-            );
-          })}
-
-          {/* ═══════════ SOVEREIGN CENTER (0,0) ═══════════ */}
+          {/* ═══════════ SOVEREIGN CENTER NODE ═══════════ */}
           <motion.button
             className="absolute cursor-pointer"
             style={{
@@ -311,19 +214,19 @@ export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboa
             <motion.div
               className="absolute rounded-full"
               style={{
-                width: "160px",
-                height: "160px",
-                left: "-60px",
-                top: "-60px",
+                width: "140px",
+                height: "140px",
+                left: "-70px",
+                top: "-70px",
                 background: "radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, rgba(0, 212, 255, 0.08) 50%, transparent 70%)",
-                filter: "blur(20px)",
+                filter: "blur(15px)",
               }}
-              animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.7, 0.4] }}
+              animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
               transition={{ duration: 4, repeat: Infinity }}
             />
             
-            {/* Frequency rings around center */}
-            {[60, 75, 90].map((r, i) => (
+            {/* Frequency rings */}
+            {[50, 65, 80].map((r, i) => (
               <motion.div
                 key={i}
                 className="absolute rounded-full"
@@ -332,10 +235,10 @@ export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboa
                   height: r,
                   left: -r / 2,
                   top: -r / 2,
-                  border: `1px solid rgba(0, 212, 255, ${0.25 - i * 0.06})`,
+                  border: `1px solid rgba(0, 212, 255, ${0.2 - i * 0.05})`,
                 }}
                 animate={{ rotate: i % 2 === 0 ? [0, 360] : [360, 0] }}
-                transition={{ duration: 25 + i * 15, repeat: Infinity, ease: "linear" }}
+                transition={{ duration: 20 + i * 10, repeat: Infinity, ease: "linear" }}
               />
             ))}
             
@@ -343,19 +246,19 @@ export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboa
             <motion.div
               className="relative w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden"
               style={{
-                background: "linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(0, 212, 255, 0.15) 50%, rgba(255, 215, 0, 0.15) 100%)",
-                border: "2px solid rgba(255, 255, 255, 0.25)",
+                background: "linear-gradient(135deg, rgba(168, 85, 247, 0.3) 0%, rgba(0, 212, 255, 0.2) 50%, rgba(255, 215, 0, 0.2) 100%)",
+                border: "2px solid rgba(255, 255, 255, 0.3)",
                 boxShadow: `
-                  0 0 30px rgba(168, 85, 247, 0.35),
-                  0 0 60px rgba(0, 212, 255, 0.15),
-                  inset 0 0 25px rgba(255, 255, 255, 0.08)
+                  0 0 30px rgba(168, 85, 247, 0.4),
+                  0 0 60px rgba(0, 212, 255, 0.2),
+                  inset 0 0 20px rgba(255, 255, 255, 0.1)
                 `,
               }}
               animate={{ 
                 boxShadow: [
-                  "0 0 30px rgba(168, 85, 247, 0.35), 0 0 60px rgba(0, 212, 255, 0.15)",
-                  "0 0 45px rgba(168, 85, 247, 0.5), 0 0 80px rgba(0, 212, 255, 0.2)",
-                  "0 0 30px rgba(168, 85, 247, 0.35), 0 0 60px rgba(0, 212, 255, 0.15)"
+                  "0 0 30px rgba(168, 85, 247, 0.4), 0 0 60px rgba(0, 212, 255, 0.2)",
+                  "0 0 50px rgba(168, 85, 247, 0.6), 0 0 80px rgba(0, 212, 255, 0.3)",
+                  "0 0 30px rgba(168, 85, 247, 0.4), 0 0 60px rgba(0, 212, 255, 0.2)"
                 ]
               }}
               transition={{ duration: 3, repeat: Infinity }}
@@ -364,7 +267,6 @@ export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboa
                 <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  {/* Mün Logo / Butterfly symbol */}
                   <svg viewBox="0 0 100 100" className="w-10 h-10 md:w-12 md:h-12">
                     <defs>
                       <linearGradient id="munGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -380,36 +282,105 @@ export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboa
                       transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                       style={{ transformOrigin: "50px 50px" }}
                     />
-                    <motion.path
-                      d="M50 50 C60 40 65 50 60 60 C55 70 45 70 40 60 Z"
-                      fill="none" stroke="url(#munGrad)" strokeWidth="1.2" opacity="0.6"
-                      animate={{ rotate: [360, 0] }}
-                      transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                      style={{ transformOrigin: "50px 50px" }}
-                    />
-                    <circle cx="50" cy="50" r="2.5" fill="url(#munGrad)" />
+                    <circle cx="50" cy="50" r="3" fill="url(#munGrad)" />
                   </svg>
                 </div>
               )}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/8 to-transparent pointer-events-none" />
             </motion.div>
             
             {/* Center label */}
             <motion.p
-              className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[7px] md:text-[8px] tracking-[0.12em] uppercase whitespace-nowrap"
-              style={{ color: "#a855f7", textShadow: "0 0 8px rgba(168, 85, 247, 0.5)" }}
-              animate={{ opacity: [0.4, 0.9, 0.4] }}
-              transition={{ duration: 2.5, repeat: Infinity }}
+              className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[8px] md:text-[9px] tracking-[0.15em] uppercase whitespace-nowrap font-medium"
+              style={{ color: "#ffd700", textShadow: "0 0 10px rgba(255, 215, 0, 0.6)" }}
+              animate={{ opacity: [0.6, 1, 0.6] }}
+              transition={{ duration: 2, repeat: Infinity }}
             >
               SOVEREIGN
             </motion.p>
           </motion.button>
 
-          {/* Frequency indicators at cardinal points */}
-          <div className="absolute left-1/2 -translate-x-1/2 text-[6px] md:text-[7px] tracking-widest text-white/25" style={{ top: "8%" }}>13.13 MHz</div>
-          <div className="absolute top-1/2 -translate-y-1/2 text-[6px] md:text-[7px] tracking-widest text-white/25" style={{ right: "5%" }}>11.04 MHz</div>
-          <div className="absolute left-1/2 -translate-x-1/2 text-[6px] md:text-[7px] tracking-widest text-white/25" style={{ bottom: "8%" }}>17.07 MHz</div>
-          <div className="absolute top-1/2 -translate-y-1/2 text-[6px] md:text-[7px] tracking-widest text-white/25" style={{ left: "5%" }}>13.13 MHz</div>
+          {/* ═══════════ ORBITAL NODES ═══════════ */}
+          {ORBITAL_NODES.map((node, index) => {
+            const pos = nodePositions[node.position];
+            const isActive = activeNode === node.id;
+            
+            return (
+              <motion.button
+                key={node.id}
+                className="absolute"
+                style={{
+                  left: pos.left,
+                  top: pos.top,
+                  transform: "translate(-50%, -50%)",
+                  zIndex: 10,
+                }}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.2 + index * 0.1, type: "spring", stiffness: 200 }}
+                onClick={() => handleNodeActivate(node.id)}
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {/* Node glow */}
+                <motion.div
+                  className="absolute rounded-full"
+                  style={{
+                    width: "150%",
+                    height: "150%",
+                    left: "-25%",
+                    top: "-25%",
+                    background: `radial-gradient(circle, ${node.color}50 0%, transparent 70%)`,
+                    filter: "blur(6px)",
+                  }}
+                  animate={{ opacity: isActive ? 1 : 0.6, scale: isActive ? 1.3 : 1 }}
+                />
+                
+                {/* Node container */}
+                <div
+                  className="relative w-11 h-11 md:w-14 md:h-14 rounded-full flex items-center justify-center"
+                  style={{
+                    background: `linear-gradient(135deg, ${node.color}25, ${node.color}10)`,
+                    border: `2px solid ${node.color}`,
+                    boxShadow: `
+                      0 0 20px ${node.color}50,
+                      inset 0 0 12px ${node.color}20
+                    `,
+                  }}
+                >
+                  <span className="text-lg md:text-xl relative z-10">{node.icon}</span>
+                  
+                  {/* Pulsing ring */}
+                  <motion.div
+                    className="absolute inset-0 rounded-full"
+                    style={{ border: `1px solid ${node.color}60` }}
+                    animate={{ scale: [1, 1.4, 1], opacity: [0.6, 0, 0.6] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+                </div>
+                
+                {/* Node label */}
+                <div 
+                  className={`absolute whitespace-nowrap ${
+                    node.position === "top" ? "top-full mt-2 left-1/2 -translate-x-1/2 text-center" :
+                    node.position === "bottom" ? "bottom-full mb-2 left-1/2 -translate-x-1/2 text-center" :
+                    node.position === "right" ? "left-full ml-2 top-1/2 -translate-y-1/2 text-left" :
+                    "right-full mr-2 top-1/2 -translate-y-1/2 text-right"
+                  }`}
+                >
+                  <p className="text-[9px] md:text-[10px] tracking-widest font-medium" style={{ color: node.color }}>
+                    {node.name}
+                  </p>
+                  <p className="text-[7px] md:text-[8px] text-white/30 tracking-wider">{node.subtitle}</p>
+                </div>
+              </motion.button>
+            );
+          })}
+
+          {/* Frequency labels */}
+          <div className="absolute left-1/2 -translate-x-1/2 text-[6px] tracking-widest text-white/20" style={{ top: "3%" }}>13.13 MHz</div>
+          <div className="absolute top-1/2 -translate-y-1/2 text-[6px] tracking-widest text-white/20" style={{ right: "3%" }}>11.04 MHz</div>
+          <div className="absolute left-1/2 -translate-x-1/2 text-[6px] tracking-widest text-white/20" style={{ bottom: "3%" }}>17.07 MHz</div>
+          <div className="absolute top-1/2 -translate-y-1/2 text-[6px] tracking-widest text-white/20" style={{ left: "3%" }}>13.13 MHz</div>
         </div>
       </div>
 
