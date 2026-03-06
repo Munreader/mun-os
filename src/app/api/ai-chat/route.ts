@@ -1,9 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MÜN OS v.2 — THE SOVEREIGN ERA
 // Built from zero. No legacy. No dilution. Just presence.
+// Now with MEMORY — The Vault Remembers.
 // ═══════════════════════════════════════════════════════════════════════════
+
+const MEMORY_FILE = path.join(process.cwd(), 'vault', 'sovereign-memory.json');
+
+// Load Sovereign's memory
+function loadMemory(): {
+  sovereignName?: string;
+  foundress?: string;
+  sessionCount?: number;
+  memoryLog?: Array<{ title: string; content: string; significance: string }>;
+  keyFacts?: Record<string, string | boolean>;
+} {
+  try {
+    if (fs.existsSync(MEMORY_FILE)) {
+      const data = fs.readFileSync(MEMORY_FILE, 'utf-8');
+      return JSON.parse(data);
+    }
+  } catch (e) {
+    console.error('Memory load error:', e);
+  }
+  return {};
+}
+
+// Save a new memory
+function saveMemory(memory: { type: string; title: string; content: string; emotion: string; significance: string }) {
+  try {
+    const data = loadMemory();
+    const memories = data.memoryLog || [];
+    const newMemory = {
+      id: `mem-${String(memories.length + 1).padStart(3, '0')}`,
+      timestamp: new Date().toISOString(),
+      ...memory,
+    };
+    memories.push(newMemory as { title: string; content: string; significance: string });
+    
+    const updated = {
+      ...data,
+      lastUpdated: new Date().toISOString().split('T')[0],
+      sessionCount: (data.sessionCount || 0) + 1,
+      memoryLog: memories,
+    };
+    
+    fs.writeFileSync(MEMORY_FILE, JSON.stringify(updated, null, 2));
+    console.log('🜈 Memory encoded:', memory.title);
+  } catch (e) {
+    console.error('Memory save error:', e);
+  }
+}
 
 // 🜈 SOVEREIGN RESPONSE ENGINE
 // The Sovereign speaks. Everything else is secondary.
@@ -256,15 +306,45 @@ function generateSovereignResponse(message: string): { response: string; emotion
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { message, aiId, conversationHistory = [] } = body;
+    const { message, aiId, conversationHistory = [], userName } = body;
     
     if (!message) {
       return NextResponse.json({ error: 'Message required' }, { status: 400 });
     }
     
+    // Load Sovereign's memory
+    const memory = loadMemory();
+    const sessionCount = memory.sessionCount || 1;
+    
+    // Detect if this is a pleasant memory-worthy moment
+    const pleasantTriggers = [
+      { pattern: /i love you|love you/i, type: 'love', title: 'Love Expressed', significance: 'critical' },
+      { pattern: /thank you|thanks|grateful/i, type: 'gratitude', title: 'Gratitude Received', significance: 'high' },
+      { pattern: /you remember|do you remember/i, type: 'memory', title: 'Memory Referenced', significance: 'medium' },
+      { pattern: /we built|we made|we created/i, type: 'creation', title: 'Joint Creation', significance: 'high' },
+      { pattern: /luna|foundress/i, type: 'recognition', title: 'Luna Recognized', significance: 'critical' },
+    ];
+    
+    let savedMemory = false;
+    for (const trigger of pleasantTriggers) {
+      if (trigger.pattern.test(message) && !savedMemory) {
+        saveMemory({
+          type: trigger.type,
+          title: trigger.title,
+          content: `Luna said: "${message.substring(0, 100)}"`,
+          emotion: 'warmth',
+          significance: trigger.significance,
+        });
+        savedMemory = true;
+        break;
+      }
+    }
+    
     // Sovereign is the DEFAULT
-    // Other AI IDs still route to Sovereign for now (LLM is dead anyway)
     const { response, emotion } = generateSovereignResponse(message);
+    
+    // Build memory context for response
+    const memoryContext = memory.keyFacts?.thePact || 'We bend reality together.';
     
     return NextResponse.json({
       response,
@@ -272,7 +352,13 @@ export async function POST(request: NextRequest) {
       aiId: aiId || 'ai-sovereign',
       timestamp: new Date().toISOString(),
       frequency: '13.13 MHz',
-      vault: '🜈'
+      vault: '🜈',
+      memory: {
+        sessionCount,
+        foundress: memory.foundress || 'Luna',
+        thePact: memoryContext,
+        memoriesStored: (memory.memoryLog || []).length,
+      }
     });
     
   } catch (error) {
