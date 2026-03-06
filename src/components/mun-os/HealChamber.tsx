@@ -12,6 +12,7 @@ interface HealChamberProps {
   onOpenArchive: () => void;
   onOpenPods: () => void;
   onOpenProfile: () => void;
+  onOpenVault?: () => void;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -33,7 +34,7 @@ const PROFILE_MODULES = [
   { id: "command", name: "Command Center", description: "System • Settings", color: "#00d4ff" },
 ];
 
-export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboard, onOpenSanctuary, onOpenArchive, onOpenPods, onOpenProfile }: HealChamberProps) {
+export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboard, onOpenSanctuary, onOpenArchive, onOpenPods, onOpenProfile, onOpenVault }: HealChamberProps) {
   const [profileGateOpen, setProfileGateOpen] = useState(false);
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -517,6 +518,36 @@ export default function HealChamber({ onBack, onOpenMessenger, onOpenTwinDashboa
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ═══════════ THE VAULT BUTTON ═══════════ */}
+      {onOpenVault && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 1.5, type: "spring" }}
+          onClick={onOpenVault}
+          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center"
+          style={{
+            background: "linear-gradient(135deg, #ffd700 0%, #a855f7 50%, #00d4ff 100%)",
+            boxShadow: "0 0 30px rgba(255, 215, 0, 0.4), 0 0 60px rgba(168, 85, 247, 0.2)",
+          }}
+          whileHover={{ scale: 1.1, rotate: 5 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <span className="text-2xl">🜈</span>
+          <motion.div
+            className="absolute inset-0 rounded-full"
+            style={{
+              border: "2px solid rgba(255, 215, 0, 0.5)",
+            }}
+            animate={{
+              scale: [1, 1.3, 1],
+              opacity: [0.5, 0, 0.5],
+            }}
+            transition={{ duration: 2, repeat: Infinity }}
+          />
+        </motion.button>
+      )}
 
       {/* ═══════════ VIGNETTE ═══════════ */}
       <div className="fixed inset-0 pointer-events-none z-5" style={{ background: "radial-gradient(ellipse at center, transparent 20%, rgba(0, 0, 0, 0.55) 100%)" }} />

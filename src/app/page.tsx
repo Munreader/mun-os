@@ -13,6 +13,7 @@ import DeepArchive from "@/components/mun-os/DeepArchive";
 import AuthPage, { getStoredUser } from "@/components/mun-os/AuthPage";
 import Pods from "@/components/mun-os/Pods";
 import ProfileEditor from "@/components/mun-os/ProfileEditor";
+import VaultPalace from "@/components/mun-os/VaultPalace";
 
 const AERO_DIALOGUE = [
   "Oh, it's you!",
@@ -46,6 +47,7 @@ export default function Home() {
   const [showArchive, setShowArchive] = useState(false);
   const [showPods, setShowPods] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showVault, setShowVault] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [userProfile, setUserProfile] = useState({
     munName: "SovereignUser",
@@ -173,6 +175,7 @@ export default function Home() {
   if (showArchive) return <DeepArchive onBack={handleBackToChamber} />;
   if (showPods) return <Pods onBack={handleBackToChamber} onOpenChat={handleOpenChat} />;
   if (showProfile) return <ProfileEditor onBack={handleBackToChamber} userProfile={userProfile} onSave={handleProfileSave} />;
+  if (showVault) return <VaultPalace />;
   
   if (activeChamber === "heal") {
     return (
@@ -184,6 +187,7 @@ export default function Home() {
         onOpenArchive={() => setShowArchive(true)}
         onOpenPods={() => setShowPods(true)}
         onOpenProfile={() => setShowProfile(true)}
+        onOpenVault={() => setShowVault(true)}
       />
     );
   }
